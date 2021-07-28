@@ -1,0 +1,68 @@
+function doGet(e)
+{
+ var listOfID = listFolders();
+ var allResult;
+ listOfID.forEach(element => 
+ {
+  var jo = {};
+  var dataArray = [];
+  dataArray.push(getFilesInFolder(element));
+  
+  jo.TilePackName = DriveApp.getFolderById(element).getName();
+  jo.TilePack = dataArray[0];
+
+  var result = JSON.stringify(jo);
+  
+  if(allResult=== undefined) allResult = result;
+  else allResult += result;
+
+ });
+ 
+ Logger.log(allResult);
+ return ContentService.createTextOutput(allResult).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getFilesInFolder(folderId) 
+{
+  var files = DriveApp.getFolderById(folderId).getFiles();
+  var result = [];
+  while (files.hasNext()) {
+      var file = files.next();
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      var temp = {
+        file_name: file.getName(),
+        url: "http://drive.google.com/uc?export=view&id=" + file.getId(),
+      };
+      result.push(temp);
+  };
+  return result;
+}
+
+
+function getSubFolders(parent) 
+{
+  parent = parent.getId();
+  var childFolder = DriveApp.getFolderById(parent).getFolders();
+  while(childFolder.hasNext()) {
+    var child = childFolder.next();
+    Logger.log(child.getName());
+    getSubFolders(child);
+  }
+  return;
+}
+
+function listFolders() 
+{
+  var folderArray = [];
+  var parentFolder = DriveApp.getFolderById("1kSZGcT6zHtSnYcXHXMPYg4UiQQ1Mo7_F");
+  var childFolders = parentFolder.getFolders();
+  while(childFolders.hasNext()) 
+  {
+    var child = childFolders.next();
+    folderArray.push(child.getId());
+    getSubFolders(child);
+   
+    Logger.log(child.getName()); 
+  }
+  return folderArray;
+}
